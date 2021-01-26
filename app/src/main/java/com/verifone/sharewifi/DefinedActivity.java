@@ -148,9 +148,9 @@ public final class DefinedActivity extends Activity implements
                     cameraInfo = Camera.CameraInfo.CAMERA_FACING_BACK;
                 }
                 initCamera(surfaceHolder);
-
             }
         });
+        init();
 
         Log.d(TAG1, "onCreate is excute");
         //开启计时，30秒后关闭app
@@ -165,7 +165,6 @@ public final class DefinedActivity extends Activity implements
                     new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE},
                     DEFINED_CODE);
         }else{
-
             Log.d(TAG1, Integer.toString(Build.VERSION.SDK_INT));
         }
     }
@@ -176,7 +175,8 @@ public final class DefinedActivity extends Activity implements
             return;
         }
         if (requestCode == DEFINED_CODE) {
-            onResume();
+            initCamera(surfaceHolder);
+            Log.d(TAG1, "DefinedActivity onResume is excute");
         }
 
     }
@@ -186,6 +186,10 @@ public final class DefinedActivity extends Activity implements
     protected void onResume() {
         super.onResume();
 
+
+    }
+
+    private void init(){
         // CameraManager必须在这里初始化，而不是在onCreate()中。
         // 这是必须的，因为当我们第一次进入时需要显示帮助页，我们并不想打开Camera,测量屏幕大小
         // 当扫描框的尺寸不正确时会出现bug
@@ -304,17 +308,6 @@ public final class DefinedActivity extends Activity implements
         }
     }
 
-    public void test(){
-        if (hasSurface) {
-            // activity在paused时但不会stopped,因此surface仍旧存在；
-            // surfaceCreated()不会调用，因此在这里初始化camera
-            initCamera(surfaceHolder);
-            Log.d(TAG1, "onResume is excute");
-        } else {
-            // 重置callback，等待surfaceCreated()来初始化camera
-            surfaceHolder.addCallback(this);
-        }
-    }
 
 
     /**
@@ -323,10 +316,11 @@ public final class DefinedActivity extends Activity implements
      * @param surfaceHolder
      */
     public void initCamera(SurfaceHolder surfaceHolder) {
+        Log.d(TAG1,"cameraManager.isOpen() is"+ "2222");
         if (surfaceHolder == null) {
             throw new IllegalStateException("No SurfaceHolder provided");
         }
-        Log.d(TAG1,"cameraManager.isOpen() is"+ cameraManager.isOpen());
+        Log.d(TAG1,"cameraManager.isOpen() is"+ "11111");
 
         if (cameraManager.isOpen()) {
             // 如果相机已经打开 则关闭当前相机 重建一个 切换摄像头，，如果不需要切换前置摄像头 则这里直接return
@@ -337,6 +331,10 @@ public final class DefinedActivity extends Activity implements
         try {
             // 打开Camera硬件设备
             cameraManager.openDriver(surfaceHolder,cameraInfo);
+            //有机型出现过前置摄像头图像反转，手动将图像转正
+            if(cameraInfo == Camera.CameraInfo.CAMERA_FACING_BACK){
+                cameraManager.setCameraDisplayOrientation(this);
+            }
             // 创建一个handler来打开预览，并抛出一个运行时异常
             if (handler == null) {
                 Log.d(TAG1,"new handler is excute");
@@ -374,7 +372,6 @@ public final class DefinedActivity extends Activity implements
 
         @Override
         public void run() {
-            Log.d(TAG1, "check timer is run" + (System.currentTimeMillis() - mLastActionTime));
             if (System.currentTimeMillis() - mLastActionTime >30 * 1000) {
                 finish();
                 // 停止计时任务
